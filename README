@@ -1,13 +1,13 @@
 # nlptk
 
-FIXME: write description
+A collection of NLP utilities wrapped in Clojure
 
 ## Usage
 
-FIXME: write
+;;TODO
 
 ## License
 
-Copyright (C) 2010 FIXME
+Copyright (C) 2011 Cory Giles
 
 Distributed under the Eclipse Public License, the same as Clojure.

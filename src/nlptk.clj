@@ -1,10 +1,15 @@
 (ns nlptk
+  (:gen-class)
   (:use
    clojure.contrib.def)
+  (:require
+   [clojure.contrib.str-utils :as str-utils])
   (:import
    (com.aliasi.dict ExactDictionaryChunker MapDictionary DictionaryEntry)
    (com.aliasi.tokenizer IndoEuropeanTokenizerFactory)
-   (com.aliasi.chunk ChunkingImpl)))
+   (com.aliasi.chunk ChunkingImpl)
+   aiiaadi.util.Utility
+   edu.stanford.nlp.parser.lexparser.LexicalizedParser))
 
 (defn- clojurify-chunking [chunking]
   (map #(hash-map :id (try (Integer/parseInt (.type %))
@@ -42,3 +47,29 @@
                 (.chunk (first chunker-objs) text)
                 (rest chunker-objs))))
      {:chunkers chunker-objs})))
+
+ 
+(defn find-acronyms [text]
+  "Finds acronyms within text (whose long forms are also included)
+  and returns a map of {Short-forms Long-forms}"
+  (for [acro (Utility/performTest "" text)]
+    (let [[sf lf _] (str-utils/re-split #"[|]" acro)]
+      {sf lf})))
+
+(defn replace-acronyms [text]
+  "Finds all acronyms within the text and replaces them with expansions."
+  (reduce
+   #(str-utils/re-gsub (re-pattern (ffirst %2)) (second (first %2)) %1)
+   text (find-acronyms text)))
+
+(defn load-parser [path-to-serialized-parser]
+  (let [parser (LexicalizedParser.
+                (java.io.ObjectInputStream.
+                 (java.util.zip.GZIPInputStream.
+                  path-to-serialized-parser)))]
+    #(.apply parser %)))
+
+
+
+
+
