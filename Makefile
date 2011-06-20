@@ -9,3 +9,7 @@ download-treebank : clean
 
 train-parser : download-treebank
 	lein run -m es.corygil.nlptk.parser
+
+push : 
+	lein pom && lein jar
+	scp pom.xml *.jar clojars@clojars.org:
