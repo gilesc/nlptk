@@ -1,4 +1,4 @@
-(ns nlptk
+(ns es.corygil.nlptk
   (:gen-class)
   (:use
    clojure.contrib.def)

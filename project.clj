@@ -1,5 +1,6 @@
-(defproject nlptk "1.0.0-SNAPSHOT"
+(defproject es.corygil/nlptk "1.0.0-SNAPSHOT"
   :description "A collection of basic NLP utilities."
+  :dev-dependencies [[swank-clojure "1.4.0-SNAPSHOT"]]
   :dependencies [[org.clojure/clojure "1.2.1"]
                  [org.clojure/clojure-contrib "1.2.0"]
                  [com.aliasi/lingpipe "4.0.1"]
