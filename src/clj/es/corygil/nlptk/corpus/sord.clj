@@ -23,7 +23,7 @@
       :sources (set (map :SourceID records))
       :birth-date (apply min (map :Birth_Date records))
       :frequency (apply max (map :Occurances records))}
-     (zipmap [:synonyms-ci :synonyms]
+     (zipmap [:synonyms-cs :synonyms]
              (map #(map :Objectsynonym %)
                     (seq/separate :CAPS_flag records))))))
 
