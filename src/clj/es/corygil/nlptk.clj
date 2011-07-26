@@ -67,28 +67,26 @@
    #(str-utils/re-gsub (re-pattern (ffirst %2)) (second (first %2)) %1)
    text (find-acronyms text)))
 
-(def read-tree
-  "Read Penn Tree from a String."
-  (let [trf (StringLabeledScoredTreeReaderFactory.)]
-    (fn [ptb]
-      (.readTree
-       (.newTreeReader trf (StringReader.
-                            (string/replace-re #"\[[-\d\.]{3,8}\]" "" ptb))))))) ;;Remove scores if extant.
+(let [trf (StringLabeledScoredTreeReaderFactory.)]
+  (defn read-tree [ptb]
+    "Read Penn Tree from a String."
+    (.readTree
+     (.newTreeReader trf (StringReader.
+                          (string/replace-re #"\[[-\d\.]{3,8}\]" "" ptb))))))
 
-(def ptb-to-sd
-  "Converts a Penn Tree object to Clojure representation of the Stanford Dependencies."
-  (let [tlp (PennTreebankLanguagePack.)
-        gsf (.grammaticalStructureFactory tlp)]
-    (fn [tree]
-      (try
-       (let [ty (.taggedYield tree)]
-         {:words (map #(.word %) ty)
-          :tags (map #(.tag %) ty)
-          :deps (map (fn [d] 
-                       [(dec (.. d gov index)) (dec (.. d dep index)) (.. d reln toString)])
-                     (.typedDependencies
-                      (.newGrammaticalStructure gsf tree)))})
-       (catch java.lang.RuntimeException _)))))
+(let [tlp (PennTreebankLanguagePack.)
+      gsf (.grammaticalStructureFactory tlp)]
+  (defn ptb-to-sd [tree]
+    "Converts a Penn Tree object to Clojure representation of the Stanford Dependencies."
+    (try
+      (let [ty (.taggedYield tree)]
+        {:words (map #(.word %) ty)
+         :tags (map #(.tag %) ty)
+         :deps (map (fn [d] 
+                      [(dec (.. d gov index)) (dec (.. d dep index)) (.. d reln toString)])
+                    (.typedDependencies
+                     (.newGrammaticalStructure gsf tree)))})
+      (catch java.lang.RuntimeException _))))
 
 (defn load-parser [path-to-serialized-parser]
   (let [parser (LexicalizedParser.
