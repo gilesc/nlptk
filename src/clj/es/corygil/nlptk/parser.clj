@@ -1,64 +1,51 @@
 (ns es.corygil.nlptk.parser
+  (:require
+   [es.corygil.nlptk.sexp :as sexp])
   (:use
+   [clojure.contrib.probabilities.random-numbers :only [rand-stream]]
+   [clojure.contrib.probabilities.finite-distributions :only [normalize-cond]]
    clojure.contrib.def))
 
-(defn sample-pdist [pdist] ;TODO:
-  (vals pdist))
+(defn sample-distribution [n pdist]
+  (take n
+        (seq (random-stream pdist rand-stream))))
 
-(defn replace-commas [tree]
-  (for [child tree]
-    (if (list? child)
-      (if (empty? child)
-        '(COMMA COMMA)
-        (replace-commas child))
-      child)))
+(defn terminal? [x]
+  (and
+   (string? (first x))
+   (= (count x) 1)))
 
-(defn read-parse [treebank-file]
-  (prn treebank-file)
-  (map #(replace-commas (first %))
-   (loop [result nil
-          reader (java.io.PushbackReader.
-                  (java.io.StringReader.
-                   (.replaceAll
-                    (.replaceAll
-                     (.replaceAll
-                      (slurp treebank-file)
-                      "\\\\+" "&")
-                     "[0-9]" "&")
-                    "[\\@#^:`*%$'*;]" "&")))] ;;TODO: fix reader
-     (if-let [form (read reader false nil)]
-       (recur (cons form result) reader)
-       result))))
+(defn merge-cdists [& cdists]
+  (reduce (fn [acc m] (merge-with #(merge-with + %1 %2) acc m))
+          {}
+          cdists))
 
 (defnk rules [tree :lex? false]
-  (let [head (first tree)]
-    (if (symbol? (second tree))
+  (let [[head & tail] tree]
+    (if (terminal? tail)
       (if lex?
-        (vector head (.toLowerCase (str (second tree)))))
+        [head tail])
       (conj
-       (map #(rules % :lex? lex?) (rest tree))
-       [head (map first (rest tree))]))))
+       (apply concat (map #(rules % :lex? lex?) tail))
+       [head (map first tail)]))))
 
-(defnk make-pcfg [treebank-dir :lex? false]
+(defnk pcfg [tree :lex? false]
   (into {}
-   (for [[head patterns]
-         (group-by first
-                   (filter vector?
-                           (tree-seq seq? seq
-                                     (for [file (take 5
-                                                      (.listFiles (java.io.File. treebank-dir)))]
-                                       (map #(rules % :lex? lex?) (read-parse file))))))
-         :let [freqs (frequencies (map fnext patterns))
-               n (count patterns)]]
-     [head (zipmap (keys freqs) (map #(/ % n) (vals freqs)))])))
+   (for [[head patterns] (group-by first (rules tree))]
+     [head (frequencies (map second patterns))])))
 
 (defn train! [treebank-dir]
   (def *pcfg*
-   (make-pcfg treebank-dir :lex? true)))
+    (normalize-cond
+     (apply merge-cdists
+             (for [file (take 5
+                              (.listFiles (java.io.File. treebank-dir)))
+                   tree (map first (sexp/parse (slurp file)))]
+               (pcfg tree))))))
+
 
 (defn generate [element]
   (let [result (rand-nth (keys (*pcfg* element)))]
-    (prn result)
     (if (string? result)
       result
       (map generate result))))
