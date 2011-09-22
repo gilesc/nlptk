@@ -11,7 +11,7 @@
    (com.aliasi.dict ExactDictionaryChunker MapDictionary DictionaryEntry)
    (com.aliasi.tokenizer IndoEuropeanTokenizerFactory)
    (com.aliasi.chunk ChunkingImpl)
-   (com.aliasi.sentences SentenceChunker MedlineSentenceModel)
+   
    aiiaadi.util.Utility
    edu.stanford.nlp.parser.lexparser.LexicalizedParser))
 
@@ -96,12 +96,6 @@
     #(.apply parser %)))
 
 
-(let [sc (SentenceChunker.
-          (IndoEuropeanTokenizerFactory/INSTANCE)
-          (MedlineSentenceModel/INSTANCE))]
-  (defn split-sentences [text]
-    (map #(subs text (.start %) (.end %))
-         (.chunkSet (.chunk sc text)))))
 
 
 
