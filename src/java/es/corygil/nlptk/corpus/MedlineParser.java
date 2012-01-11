@@ -49,11 +49,13 @@ class MedlineHandler extends DefaultHandler {
         else if ("ArticleTitle".equals(currently))
             citation.title += chars;
         else if ("AbstractText".equals(currently))
-            citation.abstrct += chars;
+            citation.abstrct += chars + " ";
     }
     public void endElement(String uri, String localName, String qName) {
-        if ("MedlineCitation".equals(qName))
+        if ("MedlineCitation".equals(qName)) {
+            citation.abstrct = citation.abstrct.trim();
             citations.add(citation);
+        }
         currently = null;
     }
 }
